@@ -15,9 +15,9 @@ class ProgressiveDepth():
     
     ----------
     '''
-    def __init__(self, inc_ed = None, F = None, k = 1.5, p = 0.95):
+    def __init__(self, prog_ed = None, F = None, k = 1.5, p = 0.95):
 
-        if inc_ed == None:
+        if prog_ed == None:
             self.F = F # data matrix of functional time series
             self.depths = [] # amplitude depths for all functions
             self.labels = []
@@ -25,11 +25,11 @@ class ProgressiveDepth():
             self.p = p
 
         else:
-            self.F = inc_ed.F
-            self.depths = inc_ed.depths
-            self.labels = inc_ed.labels
-            self.k = inc_ed.k
-            self.p = inc_ed.p
+            self.F = prog_ed.F
+            self.depths = prog_ed.depths
+            self.labels = prog_ed.labels
+            self.k = prog_ed.k
+            self.p = prog_ed.p
 
     def SRSF(self, f):
         '''

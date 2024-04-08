@@ -2,7 +2,7 @@ import numpy as np
 import scipy.optimize as optimize
 import multiprocess as mp
 
-class IncElasticDepth():
+class IncrementalDepth():
     '''
     Incremental Version of Elastic Depths.
     Non-incremental version is introduced in "Elastic Depths for 
@@ -15,7 +15,7 @@ class IncElasticDepth():
     
     ----------
     '''
-    def __init__(self, inc_ed = None, F = None, k = 1.5, p = 0.95):
+    def __init__(self, inc_ed = None, F = None, k = 1.5, p = 0.95, threshold = 10, n_inc = 0):
 
         if inc_ed == None:
             self.F = F # data matrix of functional time series
@@ -23,6 +23,8 @@ class IncElasticDepth():
             self.labels = []
             self.k = k
             self.p = p
+            self.threshold = threshold
+            self.n_inc = n_inc
 
         else:
             self.F = inc_ed.F
@@ -30,6 +32,8 @@ class IncElasticDepth():
             self.labels = inc_ed.labels
             self.k = inc_ed.k
             self.p = inc_ed.p
+            self.theshold = inc_ed.threshold
+            self.n_inc = inc_ed.n_inc
 
     def SRSF(self, f):
         '''
@@ -101,3 +105,21 @@ class IncElasticDepth():
             self.labels = pool.map(lambda d: 'outlier' if d < min(c, q) else 'not outlier', self.depths)
 
         return self
+    
+    def update(self, T):
+        '''
+        Updating F with new time points T. 
+        Checking whether threshold for recomputation of depths is reached.
+        ----------
+        T: array-like, shape(n_time_points,)
+        Returns
+        -------
+        self
+        '''
+        self.F = np.concatenate((self.F, T), axis=1)
+
+        if self.n_inc >= self.threshold:
+            return self.getAmplitudeOutliers(self.F)
+        else:
+            return self
+        
