@@ -117,9 +117,11 @@ class IncrementalDepth():
         self
         '''
         self.F = np.concatenate((self.F, T), axis=1)
-        self.n_inc = T.shape[1]
+        self.n_inc += T.shape[1]
 
         if self.n_inc >= self.threshold:
+            # resetting n time increments
+            self.n_inc = 0
             return self.getAmplitudeOutliers(self.F)
         else:
             return self
