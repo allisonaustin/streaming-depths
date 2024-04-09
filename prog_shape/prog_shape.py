@@ -15,7 +15,7 @@ class ProgressiveDepth():
     
     ----------
     '''
-    def __init__(self, prog_ed = None, F = None, k = 1.5, p = 0.95):
+    def __init__(self, prog_ed=None, F=None, k=1.5, p=0.95):
 
         if prog_ed == None:
             self.F = F # data matrix of functional time series

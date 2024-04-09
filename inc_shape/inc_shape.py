@@ -15,7 +15,7 @@ class IncrementalDepth():
     
     ----------
     '''
-    def __init__(self, inc_ed = None, F = None, k = 1.5, p = 0.95, threshold = 10, n_inc = 0):
+    def __init__(self, inc_ed=None, F=None, k=1.5, p=0.95, threshold=10, n_inc=0):
 
         if inc_ed == None:
             self.F = F # data matrix of functional time series
@@ -95,7 +95,7 @@ class IncrementalDepth():
         with mp.Pool() as pool:
             depths_new = pool.map(lambda i: self.amplitudeDepth(F[i], self.F), range(len(F)))
 
-        self.depths.extend(depths_new)
+        self.depths = depths_new
 
         iqr = max(self.depths) - np.median(self.depths)
         c = np.median(self.depths) - self.k * iqr 
@@ -111,12 +111,13 @@ class IncrementalDepth():
         Updating F with new time points T. 
         Checking whether threshold for recomputation of depths is reached.
         ----------
-        T: array-like, shape(n_time_points,)
+        T: array-like, shape(n_dimensions,n_time_points)
         Returns
         -------
         self
         '''
         self.F = np.concatenate((self.F, T), axis=1)
+        self.n_inc = T.shape[1]
 
         if self.n_inc >= self.threshold:
             return self.getAmplitudeOutliers(self.F)
