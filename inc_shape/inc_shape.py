@@ -47,7 +47,7 @@ class IncrementalDepth():
         f' / sqrt(|f'|)
         '''
         f_prime = np.gradient(f.flatten())
-        return f_prime * np.sqrt(np.abs(f_prime) + 1e-16)
+        return f_prime / np.sqrt(np.abs(f_prime) + 1e-16)
 
     def distance(self, gamma, f, g):
         return np.linalg.norm(self.SRSF(f) - self.SRSF(g * gamma), ord=2)
@@ -95,9 +95,9 @@ class IncrementalDepth():
         with mp.Pool() as pool:
             depths_new = pool.map(lambda i: self.amplitudeDepth(F[i], self.F), range(len(F)))
 
-        self.depths = depths_new
+        self.depths = [d for d in depths_new if d < 1.0]
 
-        iqr = max(self.depths) - np.median(self.depths)
+        iqr = np.percentile(self.depths, 75) - np.percentile(self.depths, 25)
         c = np.median(self.depths) - self.k * iqr 
         q = np.percentile(self.depths, (1-self.p) * 100)
 

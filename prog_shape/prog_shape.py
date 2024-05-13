@@ -43,7 +43,7 @@ class ProgressiveDepth():
         f' / sqrt(|f'|)
         '''
         f_prime = np.gradient(f.flatten())
-        return f_prime * np.sqrt(np.abs(f_prime) + 1e-16)
+        return f_prime / np.sqrt(np.abs(f_prime) + 1e-16)
 
     def distance(self, gamma, f, g):
         return np.linalg.norm(self.SRSF(f) - self.SRSF(g * gamma), ord=2)
@@ -93,7 +93,7 @@ class ProgressiveDepth():
 
         self.depths.extend(depths_new)
 
-        iqr = max(self.depths) - np.median(self.depths)
+        iqr = np.percentile(self.depths, 75) - np.percentile(self.depths, 25)
         c = np.median(self.depths) - self.k * iqr 
         q = np.percentile(self.depths, (1-self.p) * 100)
 
