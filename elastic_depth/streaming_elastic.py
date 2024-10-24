@@ -10,6 +10,7 @@ import multiprocess as mp
 class StreamingDepth():
     '''
     Incremental and Progressive Version of Elastic Depths
+    Non-incremental version is introduced in "Elastic Depths for Detecting Shape Anomalies in Functional Data" [Harris et al, 2020]
     Parameters
     ----------
     inc_ed, F, k, p, threshold
@@ -22,7 +23,7 @@ class StreamingDepth():
         self.F = F # data matrix of functional time series
         self.time = np.linspace(0, 1, F.shape[0])
         self.depths = [] # elastic depths for all functions
-        self.labels = []
+        self.labels = [] # anomalous labels for each function
         self.k = k
         self.threshold = threshold
         self.n_inc = n_inc
@@ -117,8 +118,8 @@ class StreamingDepth():
 
         """
         eps = np.finfo(np.double).eps
-        f0, g, g2 = self.gradient_spline(time, f, smooth)
-        q = g / np.sqrt(np.fabs(g) + eps)
+        f0, self.g, g2 = self.gradient_spline(time, f, smooth)
+        q = self.g / np.sqrt(np.fabs(self.g) + eps)
         return q
     
     def srsf_to_f(self, q, time, f0=0.0):
@@ -249,7 +250,7 @@ class StreamingDepth():
 
     def elastic_depth(self, method="DP2", lam=0.0, parallel=True):
         """
-        calculates the elastic depth between functions in matrix f
+        Calculates the elastic depth between functions in matrix f
 
         :param f: matrix of size MxN (M time points for N functions)
         :param time: vector of size M describing the sample points
@@ -323,32 +324,15 @@ class StreamingDepth():
         self.labels = {'amp': amp_out, 'phs': phs_out}
 
         return self
-    
-    def inc_update(self, T):
-        '''
-        Updating F with new time points T. 
-        Checking whether threshold for recomputation of depths is reached.
-        ----------
-        T: array-like, shape(n_dimensions,n_time_points)
-        Returns
-        -------
-        self
-        '''
-        self.F = np.concatenate((self.F, T), axis=1)
-        self.n_inc += T.shape[1]
-
-        if self.n_inc >= self.threshold:
-            # resetting n time increments
-            self.n_inc = 0
-            return self.elastic_outliers(self.F)
-        else:
-            return self
         
 
     def prog_update(self, f, method="DP2", lam=0.0, parallel=True):
         '''
         Updating depths with new function f. 
-        Checks whether recomputation of centralness is needed.
+        Computes elastic depth for new function f.
+        Determines anomalous label of new depth measure wrt existing depths in F.
+        TODO: Checks whether recomputation of centralness is needed.
+        Parameters
         ----------
         f: array-like, shape(1,n_time_points)
         Returns
@@ -397,4 +381,47 @@ class StreamingDepth():
         self.depths['amplitude'] = np.append(self.depths['amplitude'], amp_new)
         self.depths['phase'] = np.append(self.depths['phase'], phase_new)
 
+        return self
+    
+    def inc_update(self, x, threshold=0.8, method="DP2", lam=0.0, parallel=True):
+        """
+        Updating elastic depths with new time points.
+        TODO: Checks whether recomputation of centralness is needed.
+        Parameters
+        ----------
+        x: array-like, shape(n_dimensions, 1)
+            A new time point of multidimensional function data that discretized
+            with even intervals.
+        Returns
+        -------
+        self
+        """
+        F_inc = np.vstack((self.F, x)) 
+        obs, fns = self.F.shape
+        obs2, fns2 = F_inc.shape
+        
+        t1 = np.linspace(0, 1, self.F.shape[0])
+        t2 = np.linspace(0, 1, F_inc.shape[0])
+
+        # iterating through the functions
+        for i in range(fns):
+            f1 = self.F[:,i]
+            f2 = F_inc[:,i]
+
+            q1 = self.f_to_srsf(f1, t1) # previous without new point
+            q2 = self.f_to_srsf(f2, t2) # with new point
+
+            gamma = self.optimum_reparam(q1, t2, q2, method, lam)
+            q1_aligned = np.interp(t2, np.linspace(0, 1, len(q1)), q1)
+
+            q_diff = np.linalg.norm(q2-q1_aligned)
+            print(q_diff)
+
+            if q_diff > self.threshold:
+                continue # significant change, recompute depth
+            else:
+                continue
+
+        # updating F
+        self.F = F_inc
         return self
