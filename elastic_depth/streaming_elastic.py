@@ -21,7 +21,7 @@ class StreamingDepth():
     '''
     def __init__(self, F=None, k=1.5, threshold=0.5, n_inc=0):
         self.F = F # data matrix of functional time series
-        self.time = np.linspace(0, 1, F.shape[0])
+        self.time = np.linspace(0, 1, F.shape[0]) if F is not None else None
         self.depths = [] # elastic depths for all functions
         self.labels = [] # anomalous labels for each function
         self.k = k
