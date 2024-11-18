@@ -10,21 +10,24 @@ import multiprocess as mp
 class StreamingDepth():
     '''
     Incremental and Progressive Version of Elastic Depths
-    Non-incremental version is introduced in "Elastic Depths for Detecting Shape Anomalies in Functional Data" [Harris et al, 2020]
+        Non-incremental version is introduced in "Elastic Depths for Detecting Shape Anomalies in Functional Data" [Harris et al, 2020]
     Parameters
     ----------
-    inc_ed, F, k, p, threshold
+    F: data matrix of functional time series
+    k: multiplier factor, inflates IQR for central region c, affects coverage of boxplot on Gaussian data, [1.5, 2.25] is advised
+    threshold (p): used for computing (1-p)th quantile of depth distribution d, outliers must have a depth value below the whisker c and below the (1-p)th quantile of d
     Attributes
     ----------
-    
-    ----------
+    depths: elastic depths for all functions
+    labels: anomalous labels for each function
+    n_inc: number of incremental updates 
     '''
     def __init__(self, F=None, k=1.5, threshold=0.5, n_inc=0):
-        self.F = F # data matrix of functional time series
+        self.F = F 
         self.time = np.linspace(0, 1, F.shape[0]) if F is not None else None
-        self.depths = [] # elastic depths for all functions
-        self.labels = [] # anomalous labels for each function
-        self.k = k
+        self.depths = []
+        self.labels = [] 
+        self.k = k 
         self.threshold = threshold
         self.n_inc = n_inc
 
